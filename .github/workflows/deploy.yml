@@ -38,7 +38,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Render deploy
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
+          HOOK="$(echo "$HOOK" | tr -d '[:space:]')"   # strip stray spaces/newlines from copy-paste
+          if [ -z "$HOOK" ]; then
+            echo "::error::RENDER_DEPLOY_HOOK_URL secret is missing. Add it in Settings > Secrets and variables > Actions."
+            exit 1
+          fi
           # Tell Render to deploy exactly the image we just pushed (tagged with the commit SHA)
-          curl --fail -G -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" \
+          curl --fail -G -X POST "$HOOK" \
             --data-urlencode "imgURL=docker.io/${{ env.IMAGE }}:${{ github.sha }}"
