@@ -5,12 +5,16 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "vitest run"
   },
   "dependencies": {
     "mongoose": "^9.11.2",
     "next": "^16.4.2",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.5"
   }
 }
