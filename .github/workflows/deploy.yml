@@ -1,11 +1,13 @@
 name: CI/CD - Test, Build, Push & Deploy to Render
 
-# GitHub upptäcker en push till main, en pull request eller en manuell start.
+# GitHub upptäcker en push till main eller dev, en pull request eller en manuell start.
+#   main -> production
+#   dev  -> development
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:          # pull requests kör bara testerna, de driftsätter aldrig
-    branches: [main]
+    branches: [main, dev]
   workflow_dispatch:
 
 env:
@@ -61,20 +63,25 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # En Docker-image byggs och pushas med taggarna latest och commit-SHA.
+      # En Docker-image byggs och pushas. Samma image används i alla miljöer,
+      # texten per miljö kommer från WELCOME_MESSAGE på Render.
+      # Taggar: commit-SHA, branchnamnet (main/dev) och latest (bara från main).
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
-            ${{ env.IMAGE }}:latest
             ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:${{ github.ref_name }}
+            ${{ github.ref_name == 'main' && format('{0}:latest', env.IMAGE) || '' }}
 
   deploy:
     needs: build-and-push
     # En tredje runner startas.
     runs-on: ubuntu-latest
+    # Väljer GitHub-miljö efter branch. Varje miljö har sin egen RENDER_DEPLOY_HOOK_URL.
+    environment: ${{ github.ref_name == 'main' && 'production' || 'development' }}
     steps:
       # Render får en signal via deploy-hooken att driftsätta den nya imagen.
       - name: Trigger Render deploy
@@ -83,7 +90,7 @@ jobs:
         run: |
           HOOK="$(echo "$HOOK" | tr -d '[:space:]')"   # ta bort mellanslag/radbrytningar från copy-paste
           if [ -z "$HOOK" ]; then
-            echo "::error::RENDER_DEPLOY_HOOK_URL secret is missing. Add it in Settings > Secrets and variables > Actions."
+            echo "::error::RENDER_DEPLOY_HOOK_URL secret is missing. Add it in Settings > Environments."
             exit 1
           fi
           # Be Render driftsätta exakt den image vi just pushade (taggad med commit-SHA)

@@ -27,4 +27,5 @@ describe("Message model", () => {
     const msg = new Message({ author: "   Alex   ", text: "Hi" });
     expect(msg.author).toBe("Alex");
   });
+  
 });
