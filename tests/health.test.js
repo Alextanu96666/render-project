@@ -11,4 +11,5 @@ describe("GET /api/health", () => {
     const res = GET();
     expect(await res.json()).toEqual({ status: "ok" });
   });
+  
 });
