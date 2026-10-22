@@ -36,7 +36,7 @@ export default function Guestbook({ welcome }) {
 
   return (
     <main>
-      <h1 style={{ color: "red" }}>Guestbook</h1>
+      <h1 style={{ color: "blue" }}>Guestbook</h1>
       <p className="welcome">{welcome}</p>
       <p className="sub">Next.js · MongoDB · Docker · GitHub Actions · Render</p>
 
